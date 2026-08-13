@@ -1,0 +1,5 @@
+<svg width="240" height="90" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 90" color="#F4F5F7">
+<g transform="translate(0,24) scale(0.56)">
+<path d="M0,0 H46 A14,14 0 0 1 60,14 V44 A14,14 0 0 1 46,58 H22 V100 H0 V0 Z M30,10 H50 V48 H30 Z M30,17 H50 V22 H30 Z M30,37 H50 V42 H30 Z M2,82 H20 V94 H2 Z" fill-rule="evenodd" fill="currentColor"></path><rect x="2" y="82" width="18" height="12" rx="1.5" fill="#F7C948"></rect></g>
+<text x="56" y="80" font-family="Archivo, sans-serif" font-weight="800" font-size="52" letter-spacing="-1.5" fill="currentColor">pafsi</text>
+</svg>
