@@ -1,0 +1,15 @@
+# Παράδειγμα μεταβλητών περιβάλλοντος για τοπική ανάπτυξη.
+# Αντιγράψτε αυτό το αρχείο σε ".dev.vars" και συμπληρώστε πραγματικές τιμές.
+# Το ".dev.vars" ΔΕΝ ανεβαίνει στο git (δείτε .gitignore).
+
+# API key του Resend (secret)
+RESEND_API_KEY=
+
+# Παραλήπτης των αιτημάτων της φόρμας
+CONTACT_EMAIL=
+
+# Προαιρετικό — αποστολέας. Πρέπει να είναι verified domain στο Resend.
+FROM_EMAIL="Παύση <noreply@pafsi.gr>"
+
+# Σημείωση: το rate limiting χρησιμοποιεί KV binding με όνομα RATE_LIMIT.
+# Δεν ορίζεται εδώ — ρυθμίζεται ως binding (δείτε README).
