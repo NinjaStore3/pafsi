@@ -1,0 +1,13 @@
+{
+  "name": "pafsi",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Στατικό site της Παύσης (Cloudflare Worker + static assets).",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

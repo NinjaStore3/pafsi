@@ -1,0 +1,27 @@
+{
+  // Cloudflare Worker + static assets.
+  // Deploy: `npx wrangler deploy`  (κάθε push στο main κάνει auto-deploy
+  // μέσω Workers Builds).
+  "name": "pafsi",
+  "main": "src/worker.js",
+  "compatibility_date": "2025-06-01",
+
+  // Τα στατικά αρχεία σερβίρονται από τον φάκελο public/.
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+
+  // Μη-μυστικές μεταβλητές (η CONTACT_EMAIL μπορεί να αλλάξει εδώ).
+  // Το RESEND_API_KEY είναι secret και ορίζεται στο dashboard (ή με
+  // `wrangler secret put RESEND_API_KEY`) — ΠΟΤΕ εδώ.
+  "vars": {
+    "CONTACT_EMAIL": "info@pafsi.gr",
+    "FROM_EMAIL": "Παύση <noreply@pafsi.gr>"
+  }
+
+  // Rate limiting (προαιρετικό): δημιουργήστε KV namespace και ξεσχολιάστε.
+  // "kv_namespaces": [
+  //   { "binding": "RATE_LIMIT", "id": "PASTE_KV_NAMESPACE_ID" }
+  // ]
+}

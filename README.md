@@ -4,90 +4,115 @@
 αυτόματων πωλητών (vending machines) στα βόρεια προάστια Αθηνών.
 
 Καθαρό HTML / CSS / vanilla JS, χωρίς framework και χωρίς build step. Η φόρμα
-επικοινωνίας εξυπηρετείται από **Cloudflare Pages Function** που στέλνει email μέσω
-**Resend**. Το site τρέχει στο **Cloudflare Pages** και στο domain `pafsi.gr`.
+επικοινωνίας εξυπηρετείται από έναν **Cloudflare Worker** που στέλνει email μέσω
+**Resend**. Το site τρέχει στο **Cloudflare (Workers + static assets)** και στο
+domain `pafsi.gr`.
 
 ## Δομή
 
 ```
-index.html            # Η σελίδα (single page με anchors)
-styles.css            # Design tokens & στυλ
-script.js             # Navigation, reveal on scroll, φόρμα
-functions/api/contact.js   # Pages Function: POST /api/contact
-assets/logo/          # Τα SVG του λογοτύπου
-assets/og-image.png   # 1200×630 για Open Graph
-favicon.*             # favicon.svg + PNG (32/180/192/512)
-site.webmanifest
-robots.txt, sitemap.xml
-_headers, _redirects  # Cloudflare Pages config
-.dev.vars.example     # Ονόματα μεταβλητών περιβάλλοντος
+public/               # ό,τι σερβίρεται δημόσια (η ρίζα του site)
+  index.html          # η σελίδα (single page με anchors)
+  styles.css
+  script.js
+  assets/logo/        # τα SVG του λογοτύπου
+  assets/og-image.png # 1200×630 για Open Graph
+  favicon.*           # favicon.svg + PNG (32/180/192/512)
+  site.webmanifest, robots.txt, sitemap.xml
+  _headers, _redirects
+
+src/
+  worker.js           # Worker entry: static assets + /api/contact
+  contact.js          # η λογική της φόρμας (κοινή)
+
+functions/api/contact.js   # wrapper για συμβατότητα με Cloudflare Pages
+wrangler.jsonc        # ρυθμίσεις Worker (assets, vars, KV)
+package.json          # wrangler (deploy/dev scripts)
+.dev.vars.example     # ονόματα μεταβλητών περιβάλλοντος
 ```
+
+> Η λογική της φόρμας ζει μία φορά στο `src/contact.js`. Το `src/worker.js` (Workers)
+> και το `functions/api/contact.js` (Pages) την καλούν, ώστε το project να μπορεί να
+> γίνει deploy και με τους δύο τρόπους.
 
 ## Τοπική ανάπτυξη
 
-Το site είναι καθαρά στατικό. Για μια γρήγορη προεπισκόπηση (χωρίς τη φόρμα) αρκεί
-οποιοσδήποτε static server:
-
 ```bash
-python3 -m http.server 8000
-# → http://localhost:8000
-```
+npm install
 
-Για να δουλέψει και η **φόρμα / Pages Function** τοπικά, χρησιμοποιήστε το Wrangler:
+# 1. (προαιρετικό) μεταβλητές για τη φόρμα
+cp .dev.vars.example .dev.vars    # βάλτε RESEND_API_KEY, CONTACT_EMAIL
 
-```bash
-# 1. Αντιγράψτε τις μεταβλητές και συμπληρώστε τιμές
-cp .dev.vars.example .dev.vars    # και βάλτε RESEND_API_KEY, CONTACT_EMAIL
-
-# 2. Τρέξτε τοπικά με KV binding για το rate limiting
-npx wrangler pages dev . --kv RATE_LIMIT
-# → http://localhost:8788
+# 2. τοπικός server με τον πραγματικό Workers runtime
+npx wrangler dev
+# → http://localhost:8787   (στατικά + /api/contact)
 ```
 
 Το `.dev.vars` περιέχει secrets και **δεν** ανεβαίνει στο git.
 
-## Deploy (Cloudflare Pages)
+## Deploy (Cloudflare Workers)
 
-Το repo συνδέεται απευθείας με **Cloudflare Pages**. Κάθε push στο `main` κάνει
-αυτόματο deploy.
+Το repo συνδέεται με το Cloudflare μέσω **Workers Builds**. Κάθε push στο `main`
+κάνει αυτόματο deploy.
 
-Ρυθμίσεις project στο Pages:
+Στο dashboard, όταν συνδέσετε το GitHub repo (Workers & Pages → Create → Import a
+repository → `NinjaStore3/pafsi`):
 
-- **Framework preset:** None
-- **Build command:** _(κενό)_
-- **Build output directory:** `/` (η ρίζα σερβίρεται ως έχει)
+- **Build command:** *(κενό)*
+- **Deploy command:** `npx wrangler deploy`
+- Branch: `main`
+
+Το `wrangler.jsonc` ορίζει τα πάντα: σερβίρει το `public/` ως στατικά αρχεία και
+τρέχει τον Worker για το `POST /api/contact`.
 
 ### Μεταβλητές & bindings
 
-Στο Pages → Settings:
+Στο project → **Settings → Variables and Secrets**:
 
 | Τύπος | Όνομα | Περιγραφή |
 |---|---|---|
-| Secret (env var) | `RESEND_API_KEY` | API key του Resend |
-| Env var | `CONTACT_EMAIL` | Παραλήπτης των αιτημάτων της φόρμας |
-| Env var (προαιρ.) | `FROM_EMAIL` | Αποστολέας, π.χ. `Παύση <noreply@pafsi.gr>` (verified domain στο Resend) |
-| KV namespace | `RATE_LIMIT` | Binding για rate limiting (π.χ. 5 υποβολές/ώρα ανά IP) |
+| **Secret** | `RESEND_API_KEY` | API key του Resend |
+| Var *(ήδη στο wrangler.jsonc)* | `CONTACT_EMAIL` | Παραλήπτης των αιτημάτων (αλλάξτε το εκεί ή εδώ) |
+| Var *(ήδη στο wrangler.jsonc)* | `FROM_EMAIL` | Αποστολέας, π.χ. `Παύση <noreply@pafsi.gr>` (verified domain στο Resend) |
 
-Για το KV: **Workers & Pages → KV** → δημιουργήστε namespace → στο Pages project
-προσθέστε **KV namespace binding** με Variable name `RATE_LIMIT`.
+> Το `RESEND_API_KEY` είναι **secret** — ορίστε το στο dashboard, ποτέ στον κώδικα.
+> Χωρίς αυτό, η φόρμα επιστρέφει καθαρό μήνυμα σφάλματος (500) και το site δουλεύει
+> κανονικά κατά τα άλλα.
 
-Στο Resend: επιβεβαιώστε το domain `pafsi.gr` ώστε να επιτρέπεται η αποστολή από το
-`FROM_EMAIL`.
+### Rate limiting (προαιρετικό, KV)
 
-## Σύνδεση custom domain (`pafsi.gr`)
+1. **Workers & Pages → KV → Create namespace** (π.χ. `pafsi-rate-limit`).
+2. Αντιγράψτε το **Namespace ID** και ξεσχολιάστε στο `wrangler.jsonc`:
+   ```jsonc
+   "kv_namespaces": [
+     { "binding": "RATE_LIMIT", "id": "PASTE_KV_NAMESPACE_ID" }
+   ]
+   ```
+3. Push → ο Worker αρχίζει να περιορίζει σε 5 υποβολές/ώρα ανά IP. Χωρίς το KV, το
+   rate limiting απλώς παρακάμπτεται (δεν σπάει τίποτα).
 
-1. Στο Pages project → **Custom domains → Set up a custom domain**.
-2. Προσθέστε `pafsi.gr` (apex) και ακολουθήστε τις οδηγίες DNS.
-   - Αν το DNS του domain είναι ήδη στο Cloudflare, η εγγραφή δημιουργείται αυτόματα.
-   - Αλλιώς, δείξτε το apex με `CNAME`/`A` στο Pages, όπως υποδεικνύει το dashboard.
-3. Προσθέστε και το `www.pafsi.gr` ως custom domain. Το αρχείο `_redirects` ήδη
-   ανακατευθύνει `www` → apex με 301.
-4. Το SSL εκδίδεται αυτόματα από το Cloudflare.
+## Resend
+
+1. Λογαριασμός στο **resend.com**.
+2. **Domains → Add Domain** → `pafsi.gr` → προσθέστε τα DNS records που δίνει
+   (DKIM/SPF) στο Cloudflare DNS → **Verify**.
+3. **API Keys → Create** → βάλτε το key ως `RESEND_API_KEY` (secret) στο project.
+
+> Δοκιμή πριν την επιβεβαίωση του domain: βάλτε `FROM_EMAIL=onboarding@resend.dev`
+> και `CONTACT_EMAIL` το δικό σας email (test mode του Resend).
+
+## Custom domain (`pafsi.gr`)
+
+1. Βάλτε το `pafsi.gr` στο Cloudflare (Add a site) και αλλάξτε nameservers στον
+   registrar.
+2. Project → **Settings → Domains & Routes → Add** → `pafsi.gr` και `www.pafsi.gr`.
+   Το `public/_redirects` ανακατευθύνει `www` → apex (301).
+3. Το SSL εκδίδεται αυτόματα.
 
 ## Σημειώσεις
 
 - Χρώματα, τυπογραφία και το «ταμπελάκι τιμής» ορίζονται ως CSS custom properties στο
-  `:root` του `styles.css`.
+  `:root` του `public/styles.css`.
 - Νέες σελίδες περιοχών (π.χ. `/aftomatoi-polites-kifisia`) μπορούν να προστεθούν
-  αργότερα χωρίς αναδιοργάνωση της δομής.
+  αργότερα ως αρχεία μέσα στο `public/`, χωρίς αναδιοργάνωση.
 ```
