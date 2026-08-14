@@ -19,7 +19,7 @@ public/               # ό,τι σερβίρεται δημόσια (η ρίζα
   assets/og-image.png # 1200×630 για Open Graph
   favicon.*           # favicon.svg + PNG (32/180/192/512)
   site.webmanifest, robots.txt, sitemap.xml
-  _headers, _redirects
+  _headers
 
 src/
   worker.js           # Worker entry: static assets + /api/contact
@@ -105,9 +105,14 @@ repository → `NinjaStore3/pafsi`):
 
 1. Βάλτε το `pafsi.gr` στο Cloudflare (Add a site) και αλλάξτε nameservers στον
    registrar.
-2. Project → **Settings → Domains & Routes → Add** → `pafsi.gr` και `www.pafsi.gr`.
-   Το `public/_redirects` ανακατευθύνει `www` → apex (301).
-3. Το SSL εκδίδεται αυτόματα.
+2. Project → **Settings → Domains & Routes → Add** → `pafsi.gr` (και `www.pafsi.gr`).
+3. `www` → apex: το Workers static-assets `_redirects` δέχεται μόνο **σχετικά**
+   URLs, οπότε ο cross-host redirect γίνεται με **Cloudflare Redirect Rule**:
+   Rules → **Redirect Rules** → Create → *When* hostname equals `www.pafsi.gr`
+   → *Then* Dynamic redirect to `concat("https://pafsi.gr", http.request.uri.path)`,
+   status **301**, Preserve query string. (Προαιρετικό — μπορείτε απλώς να μη
+   συνδέσετε καθόλου το `www`.)
+4. Το SSL εκδίδεται αυτόματα.
 
 ## Σημειώσεις
 
